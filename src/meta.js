@@ -2,14 +2,14 @@ import crypto from 'node:crypto';
 
 import { config, getRedirectUri } from './config.js';
 
-const META_OAUTH_URL = 'https://www.facebook.com/v23.0/dialog/oauth';
-const META_TOKEN_URL = 'https://graph.facebook.com/v23.0/oauth/access_token';
+const INSTAGRAM_OAUTH_URL = 'https://www.instagram.com/oauth/authorize';
+const INSTAGRAM_TOKEN_URL = 'https://api.instagram.com/oauth/access_token';
 
 export function buildInstagramLoginUrl() {
   const state = crypto.randomUUID();
   const redirectUri = getRedirectUri();
 
-  const url = new URL(META_OAUTH_URL);
+  const url = new URL(INSTAGRAM_OAUTH_URL);
   url.searchParams.set('client_id', config.metaAppId);
   url.searchParams.set('redirect_uri', redirectUri);
   url.searchParams.set('state', state);
@@ -28,17 +28,20 @@ export function buildInstagramLoginUrl() {
 }
 
 export async function exchangeCodeForAccessToken(code) {
-  const url = new URL(META_TOKEN_URL);
-  url.searchParams.set('client_id', config.metaAppId);
-  url.searchParams.set('client_secret', config.metaAppSecret);
-  url.searchParams.set('redirect_uri', getRedirectUri());
-  url.searchParams.set('code', code);
+  const body = new URLSearchParams({
+    client_id: config.metaAppId,
+    client_secret: config.metaAppSecret,
+    grant_type: 'authorization_code',
+    redirect_uri: getRedirectUri(),
+    code
+  });
 
-  const response = await fetch(url, {
-    method: 'GET',
+  const response = await fetch(INSTAGRAM_TOKEN_URL, {
+    method: 'POST',
     headers: {
       Accept: 'application/json'
-    }
+    },
+    body
   });
 
   const data = await response.json();
@@ -50,4 +53,3 @@ export async function exchangeCodeForAccessToken(code) {
 
   return data;
 }
-
