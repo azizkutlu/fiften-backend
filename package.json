@@ -1,0 +1,19 @@
+{
+  "name": "fiften-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Meta Instagram login backend for FifTen",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^4.21.2"
+  }
+}
