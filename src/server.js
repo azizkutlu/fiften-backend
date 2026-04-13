@@ -2,7 +2,11 @@ import cors from 'cors';
 import express from 'express';
 
 import { config, getRedirectUri } from './config.js';
-import { buildInstagramLoginUrl, exchangeCodeForAccessToken } from './meta.js';
+import {
+  buildInstagramLoginUrl,
+  exchangeCodeForAccessToken,
+  searchInstagramBusinessProfile
+} from './meta.js';
 
 const app = express();
 
@@ -19,6 +23,44 @@ app.get('/', (_req, res) => {
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true });
+});
+
+app.get('/instagram/search', async (req, res) => {
+  const query = req.query.query?.toString().trim().replace('@', '');
+
+  if (!query) {
+    return res.status(400).json({
+      error: 'query parametresi gerekli'
+    });
+  }
+
+  try {
+    const profile = await searchInstagramBusinessProfile(query);
+
+    if (!profile) {
+      return res.json({ results: [] });
+    }
+
+    return res.json({
+      results: [
+        {
+          username: profile.username || query,
+          full_name: profile.name || '',
+          is_private: false,
+          profile_pic_url: profile.profile_picture_url || '',
+          biography: profile.biography || '',
+          website: profile.website || '',
+          followers_count: profile.followers_count || 0,
+          follows_count: profile.follows_count || 0,
+          media_count: profile.media_count || 0
+        }
+      ]
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+    });
+  }
 });
 
 app.get('/auth/instagram/start', (_req, res) => {

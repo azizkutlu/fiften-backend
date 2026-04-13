@@ -4,6 +4,7 @@ import { config, getRedirectUri } from './config.js';
 
 const INSTAGRAM_OAUTH_URL = 'https://www.instagram.com/oauth/authorize';
 const INSTAGRAM_TOKEN_URL = 'https://api.instagram.com/oauth/access_token';
+const GRAPH_API_BASE_URL = 'https://graph.facebook.com/v23.0';
 
 export function buildInstagramLoginUrl() {
   const state = crypto.randomUUID();
@@ -51,4 +52,38 @@ export async function exchangeCodeForAccessToken(code) {
   }
 
   return data;
+}
+
+export async function searchInstagramBusinessProfile(username) {
+  if (!config.instagramAccessToken || !config.instagramBusinessAccountId) {
+    throw new Error(
+      'INSTAGRAM_ACCESS_TOKEN ve INSTAGRAM_BUSINESS_ACCOUNT_ID tanimlanmali.'
+    );
+  }
+
+  const url = new URL(
+    `${GRAPH_API_BASE_URL}/${config.instagramBusinessAccountId}`
+  );
+  url.searchParams.set(
+    'fields',
+    `business_discovery.username(${username}){username,name,profile_picture_url,followers_count,follows_count,media_count,biography,website}`
+  );
+  url.searchParams.set('access_token', config.instagramAccessToken);
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json'
+    }
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const message =
+      data?.error?.message || 'Instagram business discovery request failed';
+    throw new Error(message);
+  }
+
+  return data?.business_discovery || null;
 }
