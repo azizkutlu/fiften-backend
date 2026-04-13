@@ -84,19 +84,40 @@ export async function searchInstagramBusinessProfile(username) {
     throw new Error(message);
   }
 
+  const profile = data?.profile || {};
+  const profilePictureUrl = firstNonEmptyString([
+    profile?.profile_picture_url,
+    profile?.hd_profile_picture_url,
+    profile?.profile_pic_url,
+    profile?.profile_pic_url_hd,
+    profile?.profile_picture,
+    profile?.avatar_url,
+    profile?.avatar,
+    profile?.image,
+    profile?.thumbnail,
+    profile?.thumbnail_url
+  ]);
+
   return {
-    username: data?.profile?.username || username,
-    name: data?.profile?.name || '',
-    profile_picture_url:
-      data?.profile?.profile_picture_url ||
-      data?.profile?.hd_profile_picture_url ||
-      '',
-    biography: data?.profile?.biography || '',
-    website: data?.profile?.external_url || '',
-    followers_count: data?.profile?.followers || 0,
-    follows_count: data?.profile?.following || 0,
-    media_count: data?.profile?.posts || 0,
-    is_private: data?.profile?.is_private === true,
-    is_verified: data?.profile?.is_verified === true
+    username: profile?.username || username,
+    name: profile?.name || profile?.full_name || '',
+    profile_picture_url: profilePictureUrl,
+    biography: profile?.biography || '',
+    website: profile?.external_url || profile?.website || '',
+    followers_count: profile?.followers || profile?.followers_count || 0,
+    follows_count: profile?.following || profile?.following_count || 0,
+    media_count: profile?.posts || profile?.media_count || 0,
+    is_private: profile?.is_private === true,
+    is_verified: profile?.is_verified === true
   };
+}
+
+function firstNonEmptyString(values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+
+  return '';
 }
