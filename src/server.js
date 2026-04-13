@@ -46,7 +46,7 @@ app.get('/instagram/search', async (req, res) => {
         {
           username: profile.username || query,
           full_name: profile.name || '',
-          is_private: false,
+          is_private: profile.is_private === true,
           profile_pic_url: profile.profile_picture_url || '',
           biography: profile.biography || '',
           website: profile.website || '',

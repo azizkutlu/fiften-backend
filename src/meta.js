@@ -4,9 +4,11 @@ import { config, getRedirectUri } from './config.js';
 
 const INSTAGRAM_OAUTH_URL = 'https://www.instagram.com/oauth/authorize';
 const INSTAGRAM_TOKEN_URL = 'https://api.instagram.com/oauth/access_token';
-const GRAPH_API_BASE_URL = 'https://graph.facebook.com/v23.0';
 
 export function buildInstagramLoginUrl() {
+  if (!config.metaAppId) {
+    throw new Error('META_APP_ID tanimli degil.');
+  }
   const state = crypto.randomUUID();
   const redirectUri = getRedirectUri();
 
@@ -28,6 +30,9 @@ export function buildInstagramLoginUrl() {
 }
 
 export async function exchangeCodeForAccessToken(code) {
+  if (!config.metaAppId || !config.metaAppSecret) {
+    throw new Error('META_APP_ID ve META_APP_SECRET tanimli olmali.');
+  }
   const body = new URLSearchParams({
     client_id: config.metaAppId,
     client_secret: config.metaAppSecret,
@@ -55,20 +60,14 @@ export async function exchangeCodeForAccessToken(code) {
 }
 
 export async function searchInstagramBusinessProfile(username) {
-  if (!config.instagramAccessToken || !config.instagramBusinessAccountId) {
-    throw new Error(
-      'INSTAGRAM_ACCESS_TOKEN ve INSTAGRAM_BUSINESS_ACCOUNT_ID tanimlanmali.'
-    );
+  if (!config.searchApiKey) {
+    throw new Error('SEARCHAPI_API_KEY tanimlanmali.');
   }
 
-  const url = new URL(
-    `${GRAPH_API_BASE_URL}/${config.instagramBusinessAccountId}`
-  );
-  url.searchParams.set(
-    'fields',
-    `business_discovery.username(${username}){username,name,profile_picture_url,followers_count,follows_count,media_count,biography,website}`
-  );
-  url.searchParams.set('access_token', config.instagramAccessToken);
+  const url = new URL('https://www.searchapi.io/api/v1/search');
+  url.searchParams.set('engine', 'instagram_profile');
+  url.searchParams.set('username', username);
+  url.searchParams.set('api_key', config.searchApiKey);
 
   const response = await fetch(url, {
     method: 'GET',
@@ -85,5 +84,19 @@ export async function searchInstagramBusinessProfile(username) {
     throw new Error(message);
   }
 
-  return data?.business_discovery || null;
+  return {
+    username: data?.profile?.username || username,
+    name: data?.profile?.name || '',
+    profile_picture_url:
+      data?.profile?.profile_picture_url ||
+      data?.profile?.hd_profile_picture_url ||
+      '',
+    biography: data?.profile?.biography || '',
+    website: data?.profile?.external_url || '',
+    followers_count: data?.profile?.followers || 0,
+    follows_count: data?.profile?.following || 0,
+    media_count: data?.profile?.posts || 0,
+    is_private: data?.profile?.is_private === true,
+    is_verified: data?.profile?.is_verified === true
+  };
 }
