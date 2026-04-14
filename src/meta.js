@@ -98,6 +98,21 @@ export async function searchInstagramBusinessProfile(username) {
     profile?.thumbnail_url
   ]);
 
+  const rawPosts = data?.posts || data?.reels || [];
+  const postThumbnails = rawPosts
+    .slice(0, 9)
+    .map(p =>
+      firstNonEmptyString([
+        p?.thumbnail_url,
+        p?.display_url,
+        p?.image_url,
+        p?.media_url,
+        p?.thumbnail,
+        p?.image
+      ])
+    )
+    .filter(url => url.length > 0);
+
   return {
     username: profile?.username || username,
     name: profile?.name || profile?.full_name || '',
@@ -108,7 +123,8 @@ export async function searchInstagramBusinessProfile(username) {
     follows_count: profile?.following || profile?.following_count || 0,
     media_count: profile?.posts || profile?.media_count || 0,
     is_private: profile?.is_private === true,
-    is_verified: profile?.is_verified === true
+    is_verified: profile?.is_verified === true,
+    post_thumbnails: postThumbnails
   };
 }
 

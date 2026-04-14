@@ -52,7 +52,8 @@ app.get('/instagram/search', async (req, res) => {
           website: profile.website || '',
           followers_count: profile.followers_count || 0,
           follows_count: profile.follows_count || 0,
-          media_count: profile.media_count || 0
+          media_count: profile.media_count || 0,
+          post_thumbnails: profile.post_thumbnails || []
         }
       ]
     });
