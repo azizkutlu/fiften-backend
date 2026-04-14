@@ -98,7 +98,13 @@ export async function searchInstagramBusinessProfile(username) {
     profile?.thumbnail_url
   ]);
 
-  const rawPosts = data?.posts || data?.reels || [];
+  console.log('[SearchAPI] post keys örneği:', JSON.stringify(data?.posts?.[0] || data?.reels?.[0] || {}, null, 2));
+  const rawPosts = [
+    ...(data?.posts || []),
+    ...(data?.reels || []),
+    ...(data?.clips || []),
+    ...(data?.media || []),
+  ];
   const postThumbnails = rawPosts
     .slice(0, 9)
     .map(p =>
@@ -108,10 +114,18 @@ export async function searchInstagramBusinessProfile(username) {
         p?.image_url,
         p?.media_url,
         p?.thumbnail,
-        p?.image
+        p?.image,
+        p?.cover_image_url,
+        p?.cover_image,
+        p?.video_thumbnail_url,
+        p?.preview_url,
+        p?.poster_url,
+        p?.src,
+        typeof p?.images === 'string' ? p.images : null,
+        Array.isArray(p?.images) ? p.images[0] : null,
       ])
     )
-    .filter(url => url.length > 0);
+    .filter(url => url && url.length > 0);
 
   return {
     username: profile?.username || username,
