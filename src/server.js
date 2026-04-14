@@ -7,6 +7,10 @@ import {
   exchangeCodeForAccessToken,
   searchInstagramBusinessProfile
 } from './meta.js';
+import {
+  generateInstagramComment,
+  generateWhatsAppComment
+} from './ai.js';
 
 const app = express();
 
@@ -60,6 +64,28 @@ app.get('/instagram/search', async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+    });
+  }
+});
+
+app.post('/ai/instagram-comment', async (req, res) => {
+  try {
+    const comment = await generateInstagramComment(req.body);
+    return res.json({ comment });
+  } catch (error) {
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : 'AI hatası'
+    });
+  }
+});
+
+app.post('/ai/whatsapp-comment', async (req, res) => {
+  try {
+    const comment = await generateWhatsAppComment(req.body);
+    return res.json({ comment });
+  } catch (error) {
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : 'AI hatası'
     });
   }
 });

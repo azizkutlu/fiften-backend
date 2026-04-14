@@ -19,7 +19,8 @@ export const config = {
   metaRedirectPath: process.env.META_REDIRECT_PATH || '/auth/instagram/callback',
   instagramAccessToken: process.env.INSTAGRAM_ACCESS_TOKEN || '',
   instagramBusinessAccountId: process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID || '',
-  searchApiKey: process.env.SEARCHAPI_API_KEY || ''
+  searchApiKey: process.env.SEARCHAPI_API_KEY || '',
+  togetherApiKey: process.env.TOGETHER_API_KEY || ''
 };
 
 export function getRedirectUri() {
