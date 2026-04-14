@@ -1,7 +1,7 @@
 import { config } from './config.js';
 
 const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions';
-const MODEL = 'Qwen/Qwen3-235B-A22B-Instruct-Turbo';
+const MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo';
 
 async function callTogether(prompt) {
   if (!config.togetherApiKey) {
