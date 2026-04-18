@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FifTen Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080e;--surface:#0f0f18;--card:#14141f;--border:rgba(255,255,255,0.07);
+  --gold:#f5c842;--gold2:#e8a020;--pink:#f336b6;--aqua:#1fa2a4;--teal:#14b8a6;
+  --green:#22c55e;--red:#ef4444;--orange:#f97316;
+  --text:#e8e8f0;--muted:#6b7280;--muted2:#9ca3af;
+  --sidebar:220px;--radius:16px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+
+/* ── LOGIN ── */
+#login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background:radial-gradient(ellipse at 30% 20%,rgba(245,200,66,.08) 0%,transparent 60%),
+             radial-gradient(ellipse at 70% 80%,rgba(243,54,182,.06) 0%,transparent 60%), var(--bg)}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:28px;
+  padding:44px 40px;width:100%;max-width:420px;
+  box-shadow:0 40px 80px rgba(0,0,0,.6)}
+.login-logo{font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--gold),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.login-sub{color:var(--muted);font-size:14px;margin-bottom:32px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:700;color:var(--muted2);margin-bottom:6px;letter-spacing:.05em;text-transform:uppercase}
+.form-group input{width:100%;padding:12px 16px;background:rgba(255,255,255,.05);border:1px solid var(--border);
+  border-radius:12px;color:var(--text);font-size:15px;outline:none;transition:.2s}
+.form-group input:focus{border-color:rgba(245,200,66,.4);background:rgba(245,200,66,.04)}
+.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));
+  border:none;border-radius:12px;color:#000;font-weight:900;font-size:15px;cursor:pointer;
+  margin-top:8px;transition:.15s}
+.btn-login:hover{opacity:.9;transform:translateY(-1px)}
+.login-error{color:var(--red);font-size:13px;margin-top:10px;text-align:center}
+
+/* ── APP SHELL ── */
+#app{display:none;height:100vh;overflow:hidden}
+.layout{display:flex;height:100%}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar-header{padding:24px 20px 16px;border-bottom:1px solid var(--border)}
+.sidebar-logo{font-size:22px;font-weight:900;background:linear-gradient(135deg,var(--gold),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sidebar-tag{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.nav{padding:12px 10px;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;
+  cursor:pointer;color:var(--muted2);font-size:14px;font-weight:600;transition:.15s;margin-bottom:2px;
+  border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.nav-item.active{background:linear-gradient(135deg,rgba(245,200,66,.15),rgba(245,200,66,.08));
+  color:var(--gold);border:1px solid rgba(245,200,66,.2)}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
+.btn-logout{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;
+  background:none;color:var(--muted);font-size:13px;cursor:pointer;transition:.15s}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{padding:20px 28px;border-bottom:1px solid var(--border);display:flex;
+  align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0}
+.page-title{font-size:20px;font-weight:800}
+.page-subtitle{font-size:13px;color:var(--muted);margin-top:2px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.badge-live{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);
+  color:var(--green);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;
+  display:flex;align-items:center;gap:5px}
+.badge-live::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);
+  animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.btn-refresh{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:10px;
+  color:var(--muted2);padding:8px 14px;font-size:13px;cursor:pointer;transition:.15s}
+.btn-refresh:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.content{padding:24px 28px;flex:1}
+
+/* ── SECTIONS ── */
+.section{display:none}
+.section.active{display:block}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi-card.gold::before{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.kpi-card.pink::before{background:linear-gradient(90deg,var(--pink),var(--orange))}
+.kpi-card.aqua::before{background:linear-gradient(90deg,var(--aqua),var(--teal))}
+.kpi-card.green::before{background:linear-gradient(90deg,var(--green),var(--teal))}
+.kpi-icon{font-size:22px;margin-bottom:12px}
+.kpi-value{font-size:32px;font-weight:900;letter-spacing:-1px;line-height:1}
+.kpi-label{font-size:12px;color:var(--muted);margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.kpi-sub{font-size:12px;color:var(--muted2);margin-top:8px}
+.kpi-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;
+  padding:3px 8px;border-radius:999px;margin-top:8px}
+.kpi-badge.up{background:rgba(34,197,94,.12);color:var(--green)}
+.kpi-badge.down{background:rgba(239,68,68,.12);color:var(--red)}
+
+/* ── CHART CARDS ── */
+.chart-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px}
+.chart-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+.card-title{font-size:15px;font-weight:800;margin-bottom:4px}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+.chart-wrap{position:relative;height:220px}
+.chart-wrap-sm{position:relative;height:180px}
+
+/* ── TABLE ── */
+.table-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:24px}
+.table-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-header h3{font-size:15px;font-weight:800}
+table{width:100%;border-collapse:collapse}
+thead th{padding:12px 18px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.06em;background:rgba(255,255,255,.025);border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:.15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.025)}
+tbody td{padding:12px 18px;font-size:13px;color:var(--muted2)}
+tbody td:first-child{color:var(--text);font-weight:600}
+.tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700}
+.tag.premium{background:rgba(245,200,66,.12);color:var(--gold);border:1px solid rgba(245,200,66,.25)}
+.tag.free{background:rgba(107,114,128,.1);color:var(--muted);border:1px solid rgba(107,114,128,.2)}
+.tag.meta{background:rgba(24,119,242,.15);color:#60a5fa;border:1px solid rgba(24,119,242,.25)}
+.tag.google{background:rgba(234,67,53,.12);color:#f87171;border:1px solid rgba(234,67,53,.2)}
+.tag.tiktok{background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--border)}
+.tag.monthly{background:rgba(31,162,164,.12);color:var(--aqua);border:1px solid rgba(31,162,164,.25)}
+.tag.weekly{background:rgba(243,54,182,.1);color:var(--pink);border:1px solid rgba(243,54,182,.2)}
+
+/* ── AD SPEND FORM ── */
+.form-row{display:grid;grid-template-columns:repeat(5,1fr) auto;gap:12px;align-items:end;margin-bottom:16px}
+.form-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;
+  text-transform:uppercase;letter-spacing:.05em}
+.form-field select,.form-field input{width:100%;padding:10px 14px;background:rgba(255,255,255,.05);
+  border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none}
+.form-field select option{background:#1a1a2e}
+.btn-add{padding:10px 20px;background:linear-gradient(135deg,var(--gold),var(--gold2));
+  border:none;border-radius:10px;color:#000;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
+.btn-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:4px 8px;
+  border-radius:8px;transition:.15s}
+.btn-del:hover{background:rgba(239,68,68,.1)}
+.total-row{display:flex;gap:16px;padding:16px 22px;background:rgba(245,200,66,.04);border-top:1px solid rgba(245,200,66,.12)}
+.total-item{text-align:center}
+.total-item .val{font-size:22px;font-weight:900;color:var(--gold)}
+.total-item .lbl{font-size:11px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
+
+/* ── ROAS BOX ── */
+.roas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.roas-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center}
+.roas-val{font-size:36px;font-weight:900;margin:8px 0}
+.roas-label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:48px;color:var(--muted);font-size:14px}
+.skeleton{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%);
+  background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px;height:20px;margin:8px 0}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── LOADING ── */
+#loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;
+  justify-content:center;z-index:999;font-size:14px;color:var(--muted);flex-direction:column;gap:12px}
+.spinner{width:32px;height:32px;border:3px solid rgba(255,255,255,.1);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-logo">FifTen</div>
+    <div class="login-sub">Admin Paneli</div>
+    <div class="form-group">
+      <label>Kullanıcı Adı</label>
+      <input type="text" id="login-username" placeholder="username" autocomplete="username"/>
+    </div>
+    <div class="form-group">
+      <label>Şifre</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="btn-login" onclick="doLogin()">Giriş Yap</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-overlay" style="display:none">
+  <div class="spinner"></div>
+  <span>Veriler yükleniyor…</span>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">FifTen</div>
+        <div class="sidebar-tag">Admin Panel</div>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" onclick="showSection('overview')">
+          <span class="nav-icon">📊</span> Genel Bakış
+        </button>
+        <button class="nav-item" onclick="showSection('revenue')">
+          <span class="nav-icon">💰</span> Gelir
+        </button>
+        <button class="nav-item" onclick="showSection('users')">
+          <span class="nav-icon">👥</span> Kullanıcılar
+        </button>
+        <button class="nav-item" onclick="showSection('premium')">
+          <span class="nav-icon">⭐</span> Premium Üyeler
+        </button>
+        <button class="nav-item" onclick="showSection('ads')">
+          <span class="nav-icon">📣</span> Reklam Harcamaları
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px" id="admin-username"></div>
+        <button class="btn-logout" onclick="doLogout()">Çıkış Yap</button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="page-title" id="page-title">Genel Bakış</div>
+          <div class="page-subtitle" id="page-subtitle">Uygulama performansına genel bakış</div>
+        </div>
+        <div class="topbar-right">
+          <div class="badge-live">Canlı</div>
+          <button class="btn-refresh" onclick="refreshCurrent()">↻ Yenile</button>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- OVERVIEW -->
+        <div class="section active" id="section-overview">
+          <div class="kpi-grid" id="kpi-grid">
+            <div class="kpi-card gold"><div class="kpi-icon">👥</div><div class="kpi-value" id="k-total-users">—</div><div class="kpi-label">Toplam Kullanıcı</div><div class="kpi-sub" id="k-active-week">—</div></div>
+            <div class="kpi-card pink"><div class="kpi-icon">⭐</div><div class="kpi-value" id="k-premium">—</div><div class="kpi-label">Premium Üye</div><div class="kpi-sub" id="k-conversion">—</div></div>
+            <div class="kpi-card aqua"><div class="kpi-icon">📈</div><div class="kpi-value" id="k-revenue">—</div><div class="kpi-label">Tahmini Gelir</div><div class="kpi-sub">RevenueCat</div></div>
+            <div class="kpi-card green"><div class="kpi-icon">🎯</div><div class="kpi-value" id="k-roas">—</div><div class="kpi-label">ROAS</div><div class="kpi-sub" id="k-ad-total">—</div></div>
+          </div>
+
+          <div class="chart-grid">
+            <div class="card">
+              <div class="card-title">Yeni Kullanıcılar</div>
+              <div class="card-sub">Son 30 gün — günlük kayıt</div>
+              <div class="chart-wrap"><canvas id="chart-users"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Kullanıcı Dağılımı</div>
+              <div class="card-sub">Premium vs Ücretsiz</div>
+              <div class="chart-wrap"><canvas id="chart-donut"></canvas></div>
+            </div>
+          </div>
+
+          <div class="chart-grid-3">
+            <div class="card">
+              <div class="card-title">📣 Reklam Harcaması</div>
+              <div class="card-sub">Platform dağılımı</div>
+              <div class="chart-wrap-sm"><canvas id="chart-ads-donut"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-title">🪙 Haftalık Aktif</div>
+              <div class="card-sub">Son 7 günde aktif kullanıcılar</div>
+              <div style="display:flex;align-items:center;justify-content:center;height:180px;flex-direction:column;gap:8px">
+                <div style="font-size:52px;font-weight:900;color:var(--aqua)" id="k-active-week-big">—</div>
+                <div style="font-size:13px;color:var(--muted)">aktif kullanıcı</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">📊 Aylık Aktif</div>
+              <div class="card-sub">Son 30 günde aktif kullanıcılar</div>
+              <div style="display:flex;align-items:center;justify-content:center;height:180px;flex-direction:column;gap:8px">
+                <div style="font-size:52px;font-weight:900;color:var(--teal)" id="k-active-month-big">—</div>
+                <div style="font-size:13px;color:var(--muted)">aktif kullanıcı</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REVENUE -->
+        <div class="section" id="section-revenue">
+          <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+            <div class="kpi-card gold"><div class="kpi-icon">💰</div><div class="kpi-value" id="r-mrr">—</div><div class="kpi-label">Tahmini MRR</div></div>
+            <div class="kpi-card pink"><div class="kpi-icon">📦</div><div class="kpi-value" id="r-subs">—</div><div class="kpi-label">Aktif Abonelik</div></div>
+            <div class="kpi-card aqua"><div class="kpi-icon">🔄</div><div class="kpi-value" id="r-churn">—</div><div class="kpi-label">Churn Rate</div></div>
+          </div>
+          <div class="card" style="margin-bottom:24px">
+            <div class="card-title">Gelir Zaman Serisi</div>
+            <div class="card-sub">RevenueCat — son 30 gün</div>
+            <div class="chart-wrap" style="height:280px"><canvas id="chart-revenue"></canvas></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><h3>⭐ Premium Üyeler</h3></div>
+            <table>
+              <thead><tr><th>Kullanıcı</th><th>Plan</th><th>Fiyat</th><th>Başlangıç</th><th>Yenileme</th></tr></thead>
+              <tbody id="premium-table-body"><tr><td colspan="5" class="empty">Yükleniyor…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- USERS -->
+        <div class="section" id="section-users">
+          <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px">
+            <div class="kpi-card gold"><div class="kpi-icon">👥</div><div class="kpi-value" id="u-total">—</div><div class="kpi-label">Toplam Kullanıcı</div></div>
+            <div class="kpi-card aqua"><div class="kpi-icon">📅</div><div class="kpi-value" id="u-week">—</div><div class="kpi-label">Bu Hafta Aktif</div></div>
+            <div class="kpi-card green"><div class="kpi-icon">📆</div><div class="kpi-value" id="u-month">—</div><div class="kpi-label">Bu Ay Aktif</div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header">
+              <h3>Son Kayıt Olanlar</h3>
+              <span style="font-size:12px;color:var(--muted)">Son 50 kullanıcı</span>
+            </div>
+            <table>
+              <thead><tr><th>E-posta</th><th>Ad</th><th>Plan</th><th>Kayıt</th><th>Son Aktif</th></tr></thead>
+              <tbody id="users-table-body"><tr><td colspan="5" class="empty">Yükleniyor…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PREMIUM -->
+        <div class="section" id="section-premium">
+          <div class="table-card">
+            <div class="table-header"><h3>⭐ Tüm Premium Kullanıcılar</h3></div>
+            <table>
+              <thead><tr><th>E-posta</th><th>Ad</th><th>Plan</th><th>Fiyat</th><th>Yenileme</th><th>Aktivasyon</th></tr></thead>
+              <tbody id="premium-full-table"><tr><td colspan="6" class="empty">Yükleniyor…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ADS -->
+        <div class="section" id="section-ads">
+          <div class="roas-grid">
+            <div class="roas-card">
+              <div class="roas-label">Meta Harcama</div>
+              <div class="roas-val" style="color:#60a5fa" id="ad-meta">₺0</div>
+            </div>
+            <div class="roas-card">
+              <div class="roas-label">Google Harcama</div>
+              <div class="roas-val" style="color:#f87171" id="ad-google">₺0</div>
+            </div>
+            <div class="roas-card">
+              <div class="roas-label">TikTok Harcama</div>
+              <div class="roas-val" style="color:var(--text)" id="ad-tiktok">₺0</div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:24px">
+            <div class="card-title">Harcama Ekle</div>
+            <div class="card-sub">Yeni reklam harcaması kaydı</div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Platform</label>
+                <select id="ad-platform">
+                  <option value="meta">Meta</option>
+                  <option value="google">Google</option>
+                  <option value="tiktok">TikTok</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Miktar (₺)</label>
+                <input type="number" id="ad-amount" placeholder="0.00" min="0" step="0.01"/>
+              </div>
+              <div class="form-field">
+                <label>Para Birimi</label>
+                <select id="ad-currency">
+                  <option value="TRY">TRY</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Tarih</label>
+                <input type="date" id="ad-date"/>
+              </div>
+              <div class="form-field">
+                <label>Not</label>
+                <input type="text" id="ad-note" placeholder="Kampanya adı…"/>
+              </div>
+              <button class="btn-add" onclick="addAdSpend()">+ Ekle</button>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:24px">
+            <div class="card-title">Harcama Trendi</div>
+            <div class="card-sub">Son 30 gün — platforma göre</div>
+            <div class="chart-wrap" style="height:240px"><canvas id="chart-ads"></canvas></div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-header"><h3>Tüm Harcamalar</h3></div>
+            <table>
+              <thead><tr><th>Tarih</th><th>Platform</th><th>Miktar</th><th>Not</th><th></th></tr></thead>
+              <tbody id="ads-table-body"><tr><td colspan="5" class="empty">Yükleniyor…</td></tr></tbody>
+            </table>
+            <div class="total-row">
+              <div class="total-item"><div class="val" id="ad-total-val">₺0</div><div class="lbl">Toplam Harcama</div></div>
+              <div class="total-item"><div class="val" id="ad-roas-val">—</div><div class="lbl">ROAS</div></div>
+              <div class="total-item"><div class="val" id="ad-cac-val">—</div><div class="lbl">CAC / Kullanıcı</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+const API = '/admin/api';
+let TOKEN = localStorage.getItem('admin_token') || '';
+let charts = {};
+let overviewData = null;
+let adsData = null;
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  document.getElementById('login-error').textContent = '';
+  try {
+    const res = await fetch(`${API}/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Giriş başarısız');
+    TOKEN = data.token;
+    localStorage.setItem('admin_token', TOKEN);
+    const payload = JSON.parse(atob(TOKEN.split('.')[1]));
+    document.getElementById('admin-username').textContent = '👤 ' + (payload.username || 'admin');
+    showApp();
+  } catch(e) {
+    document.getElementById('login-error').textContent = e.message;
+  }
+}
+
+function doLogout() {
+  TOKEN = '';
+  localStorage.removeItem('admin_token');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+}
+
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+async function apiFetch(path, opts={}) {
+  const res = await fetch(`${API}${path}`, {
+    ...opts,
+    headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type':'application/json', ...(opts.headers||{}) }
+  });
+  if (res.status === 401) { doLogout(); throw new Error('Oturum süresi doldu'); }
+  return res.json();
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+function showApp() {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  const payload = TOKEN ? JSON.parse(atob(TOKEN.split('.')[1])) : {};
+  document.getElementById('admin-username').textContent = '👤 ' + (payload.username || 'admin');
+  loadOverview();
+}
+
+const sectionMeta = {
+  overview: {title:'Genel Bakış', sub:'Uygulama performansına genel bakış'},
+  revenue:  {title:'Gelir & Abonelikler', sub:'RevenueCat verileri ve premium kullanıcılar'},
+  users:    {title:'Kullanıcılar', sub:'Firestore kullanıcı veritabanı'},
+  premium:  {title:'Premium Üyeler', sub:'Aktif premium aboneler'},
+  ads:      {title:'Reklam Harcamaları', sub:'Meta, Google ve TikTok reklam bütçesi'},
+};
+const loaders = {
+  overview: loadOverview, revenue: loadRevenue,
+  users: loadUsers, premium: loadPremium, ads: loadAds,
+};
+
+let currentSection = 'overview';
+
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item')[Object.keys(sectionMeta).indexOf(name)].classList.add('active');
+  document.getElementById('page-title').textContent = sectionMeta[name].title;
+  document.getElementById('page-subtitle').textContent = sectionMeta[name].sub;
+  currentSection = name;
+  loaders[name]?.();
+}
+
+function refreshCurrent() { loaders[currentSection]?.(); }
+
+// ── CHARTS HELPER ─────────────────────────────────────────────────────────────
+const chartDefaults = {
+  color:'rgba(255,255,255,0.6)',
+  plugins:{legend:{display:false}},
+  scales:{
+    x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6b7280',font:{size:11}}},
+    y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6b7280',font:{size:11}}}
+  }
+};
+
+function mkLine(id, labels, datasets, opts={}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type:'line',
+    data:{labels, datasets},
+    options:{...chartDefaults, responsive:true, maintainAspectRatio:false,
+      plugins:{...chartDefaults.plugins, ...(opts.plugins||{})},
+      scales:{...chartDefaults.scales, ...(opts.scales||{})}, ...opts}
+  });
+}
+
+function mkBar(id, labels, datasets, opts={}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type:'bar',
+    data:{labels, datasets},
+    options:{...chartDefaults, responsive:true, maintainAspectRatio:false,
+      plugins:{...chartDefaults.plugins, ...(opts.plugins||{})},
+      scales:{...chartDefaults.scales, ...(opts.scales||{})}, ...opts}
+  });
+}
+
+function mkDonut(id, labels, data, colors) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type:'doughnut',
+    data:{labels, datasets:[{data, backgroundColor:colors, borderWidth:0, hoverOffset:4}]},
+    options:{responsive:true, maintainAspectRatio:false, cutout:'72%',
+      plugins:{legend:{display:true, position:'right',
+        labels:{color:'#9ca3af', font:{size:12}, boxWidth:10, padding:12}}}}
+  });
+}
+
+const fmt = v => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(1)+'K' : String(v);
+const fmtMoney = v => '₺'+ (v||0).toLocaleString('tr-TR', {minimumFractionDigits:0});
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────────────
+async function loadOverview() {
+  try {
+    const data = await apiFetch('/metrics/overview');
+    overviewData = data;
+    const fs = data.firestore || {};
+    const ads = data.adSpending || {};
+
+    document.getElementById('k-total-users').textContent = fmt(fs.totalUsers||0);
+    document.getElementById('k-active-week').textContent = `${fmt(fs.activeWeek||0)} bu hafta aktif`;
+    document.getElementById('k-premium').textContent = fmt(fs.premiumUsers||0);
+    const conv = fs.totalUsers ? ((fs.premiumUsers/fs.totalUsers)*100).toFixed(1)+'%' : '—';
+    document.getElementById('k-conversion').textContent = `${conv} dönüşüm oranı`;
+    document.getElementById('k-active-week-big').textContent = fmt(fs.activeWeek||0);
+    document.getElementById('k-active-month-big').textContent = fmt(fs.activeMonth||0);
+
+    // Revenue from RC (placeholder)
+    document.getElementById('k-revenue').textContent = '—';
+
+    // ROAS
+    const adTotal = ads.total||0;
+    document.getElementById('k-ad-total').textContent = fmtMoney(adTotal)+' harcandı';
+    document.getElementById('k-roas').textContent = adTotal > 0 ? '—' : '—';
+
+    // New users chart
+    const usersByDay = fs.newUsersByDay || {};
+    const days30 = [];
+    for (let i=29;i>=0;i--) {
+      const d = new Date(); d.setDate(d.getDate()-i);
+      days30.push(d.toISOString().split('T')[0]);
+    }
+    const userCounts = days30.map(d => usersByDay[d]||0);
+    mkLine('chart-users',
+      days30.map(d=>d.slice(5)),
+      [{data:userCounts, borderColor:'#f5c842', backgroundColor:'rgba(245,200,66,.08)',
+        fill:true, tension:.4, pointRadius:2, borderWidth:2}]
+    );
+
+    // Donut premium vs free
+    const premUsers = fs.premiumUsers||0;
+    const freeUsers = Math.max(0,(fs.totalUsers||0)-premUsers);
+    mkDonut('chart-donut',
+      ['Premium','Ücretsiz'],[premUsers,freeUsers],
+      ['#f5c842','rgba(255,255,255,.1)']
+    );
+
+    // Ads donut
+    mkDonut('chart-ads-donut',
+      ['Meta','Google','TikTok'],
+      [ads.meta||0, ads.google||0, ads.tiktok||0],
+      ['#60a5fa','#f87171','rgba(255,255,255,.6)']
+    );
+  } catch(e) { console.error(e); }
+}
+
+// ── REVENUE ───────────────────────────────────────────────────────────────────
+async function loadRevenue() {
+  // RevenueCat chart (placeholder — requires secret API key)
+  document.getElementById('r-mrr').textContent = '—';
+  document.getElementById('r-subs').textContent = '—';
+  document.getElementById('r-churn').textContent = '—';
+
+  const days30 = [];
+  for (let i=29;i>=0;i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    days30.push(d.toISOString().split('T')[0]);
+  }
+  mkLine('chart-revenue', days30.map(d=>d.slice(5)),
+    [{data:days30.map(()=>0), borderColor:'#f5c842', backgroundColor:'rgba(245,200,66,.08)',
+      fill:true, tension:.4, pointRadius:2, borderWidth:2, label:'Gelir (₺)'}],
+    {plugins:{legend:{display:true,labels:{color:'#9ca3af',font:{size:12}}}}}
+  );
+
+  // Load premium users for table
+  await loadPremiumTable('premium-table-body', 5);
+}
+
+async function loadPremiumTable(tbodyId, limit) {
+  const tbody = document.getElementById(tbodyId);
+  try {
+    const data = await apiFetch('/users/premium');
+    const users = (data.users||[]).slice(0, limit||999);
+    if (!users.length) { tbody.innerHTML='<tr><td colspan="6" class="empty">Henüz premium kullanıcı yok</td></tr>'; return; }
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td>${u.email||'—'}</td>
+        <td>${u.displayName||'—'}</td>
+        <td><span class="tag ${u.premiumPlanTitle?.includes('Haftalık')?'weekly':'monthly'}">${u.premiumPlanTitle||'—'}</span></td>
+        <td>${u.premiumPriceLabel||'—'}</td>
+        <td>${u.premiumRenewalType||'—'}</td>
+        <td>${u.premiumActivatedAt ? new Date(u.premiumActivatedAt).toLocaleDateString('tr-TR') : '—'}</td>
+      </tr>`).join('');
+  } catch(e) { tbody.innerHTML='<tr><td colspan="6" class="empty">Veri alınamadı</td></tr>'; }
+}
+
+// ── USERS ─────────────────────────────────────────────────────────────────────
+async function loadUsers() {
+  const tbody = document.getElementById('users-table-body');
+  try {
+    const data = await apiFetch('/users?limit=50');
+    const users = data.users||[];
+    document.getElementById('u-total').textContent = fmt(users.length);
+    if (overviewData?.firestore) {
+      document.getElementById('u-week').textContent = fmt(overviewData.firestore.activeWeek||0);
+      document.getElementById('u-month').textContent = fmt(overviewData.firestore.activeMonth||0);
+    }
+    if (!users.length) { tbody.innerHTML='<tr><td colspan="5" class="empty">Kullanıcı yok</td></tr>'; return; }
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td>${u.email||'—'}</td>
+        <td>${u.displayName||'—'}</td>
+        <td><span class="tag ${u.isPremium?'premium':'free'}">${u.isPremium?'Premium':'Ücretsiz'}</span></td>
+        <td>${u.createdAt ? new Date(u.createdAt).toLocaleDateString('tr-TR') : '—'}</td>
+        <td>${u.lastActiveAt ? new Date(u.lastActiveAt).toLocaleDateString('tr-TR') : '—'}</td>
+      </tr>`).join('');
+  } catch(e) { tbody.innerHTML='<tr><td colspan="5" class="empty">Veri alınamadı</td></tr>'; }
+}
+
+// ── PREMIUM ───────────────────────────────────────────────────────────────────
+async function loadPremium() {
+  await loadPremiumTable('premium-full-table', 999);
+}
+
+// ── ADS ───────────────────────────────────────────────────────────────────────
+async function loadAds() {
+  try {
+    const data = await apiFetch('/ads');
+    adsData = data;
+    renderAds(data);
+  } catch(e) { console.error(e); }
+}
+
+function renderAds(data) {
+  const s = data.summary||{};
+  document.getElementById('ad-meta').textContent = fmtMoney(s.meta);
+  document.getElementById('ad-google').textContent = fmtMoney(s.google);
+  document.getElementById('ad-tiktok').textContent = fmtMoney(s.tiktok);
+  document.getElementById('ad-total-val').textContent = fmtMoney(s.total);
+
+  // ROAS & CAC
+  const totalUsers = overviewData?.firestore?.totalUsers||0;
+  document.getElementById('ad-roas-val').textContent = s.total>0 ? '—' : '—';
+  document.getElementById('ad-cac-val').textContent = (s.total>0 && totalUsers>0) ? fmtMoney(Math.round(s.total/totalUsers)) : '—';
+
+  // Table
+  const tbody = document.getElementById('ads-table-body');
+  const entries = data.entries||[];
+  if (!entries.length) { tbody.innerHTML='<tr><td colspan="5" class="empty">Henüz harcama kaydı yok</td></tr>'; }
+  else tbody.innerHTML = entries.map(e=>`
+    <tr>
+      <td>${e.date}</td>
+      <td><span class="tag ${e.platform}">${e.platform}</span></td>
+      <td style="color:var(--gold);font-weight:700">${fmtMoney(e.amount)} ${e.currency||''}</td>
+      <td style="color:var(--muted)">${e.note||'—'}</td>
+      <td><button class="btn-del" onclick="delAd('${e.id}')">🗑</button></td>
+    </tr>`).join('');
+
+  // Chart
+  const byDay = data.byDay||{};
+  const days30 = [];
+  for (let i=29;i>=0;i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    days30.push(d.toISOString().split('T')[0]);
+  }
+  mkBar('chart-ads', days30.map(d=>d.slice(5)), [
+    {label:'Meta', data:days30.map(d=>(byDay[d]?.meta||0)), backgroundColor:'rgba(96,165,250,.7)', borderRadius:4},
+    {label:'Google', data:days30.map(d=>(byDay[d]?.google||0)), backgroundColor:'rgba(248,113,113,.7)', borderRadius:4},
+    {label:'TikTok', data:days30.map(d=>(byDay[d]?.tiktok||0)), backgroundColor:'rgba(255,255,255,.3)', borderRadius:4},
+  ], {plugins:{legend:{display:true,labels:{color:'#9ca3af',font:{size:12}}}}, scales:{x:{stacked:false},y:{stacked:false}}});
+}
+
+async function addAdSpend() {
+  const platform = document.getElementById('ad-platform').value;
+  const amount = document.getElementById('ad-amount').value;
+  const currency = document.getElementById('ad-currency').value;
+  const date = document.getElementById('ad-date').value;
+  const note = document.getElementById('ad-note').value;
+  if (!amount||!date) return alert('Miktar ve tarih zorunlu');
+  await apiFetch('/ads', {method:'POST', body:JSON.stringify({platform,amount,currency,date,note})});
+  document.getElementById('ad-amount').value='';
+  document.getElementById('ad-note').value='';
+  loadAds();
+}
+
+async function delAd(id) {
+  if (!confirm('Bu kaydı sil?')) return;
+  await apiFetch(`/ads/${id}`, {method:'DELETE'});
+  loadAds();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+// Today date default
+document.getElementById('ad-date').value = new Date().toISOString().split('T')[0];
+
+if (TOKEN) {
+  try {
+    const p = JSON.parse(atob(TOKEN.split('.')[1]));
+    if (p.exp * 1000 > Date.now()) { showApp(); }
+    else { doLogout(); }
+  } catch { doLogout(); }
+}
+</script>
+</body>
+</html>

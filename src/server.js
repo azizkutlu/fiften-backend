@@ -1,5 +1,7 @@
 import cors from 'cors';
 import express from 'express';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 import { config, getRedirectUri } from './config.js';
 import {
@@ -11,11 +13,20 @@ import {
   generateInstagramComment,
   generateWhatsAppComment
 } from './ai.js';
+import { initFirebaseAdmin } from './admin/firebase.js';
+import adminRoutes from './admin/routes.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+initFirebaseAdmin();
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// ── Admin panel ───────────────────────────────────────────────────────────────
+app.use('/admin', express.static(join(__dirname, '../public/admin')));
+app.use('/admin/api', adminRoutes);
 
 app.get('/', (_req, res) => {
   res.json({

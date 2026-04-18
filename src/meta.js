@@ -98,7 +98,6 @@ export async function searchInstagramBusinessProfile(username) {
     profile?.thumbnail_url
   ]);
 
-  console.log('[SearchAPI] tüm post listesi:', JSON.stringify(data?.posts || [], null, 2));
   const rawPosts = [
     ...(data?.posts || []),
     ...(data?.reels || []),
