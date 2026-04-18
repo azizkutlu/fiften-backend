@@ -247,8 +247,8 @@ tbody td:first-child{color:var(--text);font-weight:600}
           <div class="kpi-grid" id="kpi-grid">
             <div class="kpi-card gold"><div class="kpi-icon">👥</div><div class="kpi-value" id="k-total-users">—</div><div class="kpi-label">Toplam Kullanıcı</div><div class="kpi-sub" id="k-active-week">—</div></div>
             <div class="kpi-card pink"><div class="kpi-icon">⭐</div><div class="kpi-value" id="k-premium">—</div><div class="kpi-label">Premium Üye</div><div class="kpi-sub" id="k-conversion">—</div></div>
-            <div class="kpi-card aqua"><div class="kpi-icon">📈</div><div class="kpi-value" id="k-revenue">—</div><div class="kpi-label">Tahmini Gelir</div><div class="kpi-sub">RevenueCat</div></div>
-            <div class="kpi-card green"><div class="kpi-icon">🎯</div><div class="kpi-value" id="k-roas">—</div><div class="kpi-label">ROAS</div><div class="kpi-sub" id="k-ad-total">—</div></div>
+            <div class="kpi-card aqua"><div class="kpi-icon">📈</div><div class="kpi-value" id="k-revenue">—</div><div class="kpi-label">Son 28 Gün Gelir</div><div class="kpi-sub" id="k-subscriptions">RevenueCat bağlı değil</div></div>
+            <div class="kpi-card green"><div class="kpi-icon">🧠</div><div class="kpi-value" id="k-roas">—</div><div class="kpi-label">Toplam Analiz</div><div class="kpi-sub" id="k-ad-total">—</div></div>
           </div>
 
           <div class="chart-grid">
@@ -287,6 +287,29 @@ tbody td:first-child{color:var(--text);font-weight:600}
               </div>
             </div>
           </div>
+
+          <div class="chart-grid" style="grid-template-columns:1fr 1fr">
+            <div class="table-card">
+              <div class="table-header">
+                <h3>Instagram geçmişi</h3>
+                <span style="font-size:12px;color:var(--muted)" id="ig-activity-total">—</span>
+              </div>
+              <table>
+                <thead><tr><th>Kullanıcı</th><th>Profil</th><th>Gönderi</th><th>Zaman</th></tr></thead>
+                <tbody id="ig-activity-body"><tr><td colspan="4" class="empty">Yükleniyor…</td></tr></tbody>
+              </table>
+            </div>
+            <div class="table-card">
+              <div class="table-header">
+                <h3>WhatsApp geçmişi</h3>
+                <span style="font-size:12px;color:var(--muted)" id="wa-activity-total">—</span>
+              </div>
+              <table>
+                <thead><tr><th>Kullanıcı</th><th>Ad</th><th>Numara</th><th>Zaman</th></tr></thead>
+                <tbody id="wa-activity-body"><tr><td colspan="4" class="empty">Yükleniyor…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         <!-- REVENUE -->
@@ -319,11 +342,11 @@ tbody td:first-child{color:var(--text);font-weight:600}
           </div>
           <div class="table-card">
             <div class="table-header">
-              <h3>Son Kayıt Olanlar</h3>
+              <h3>Kullanıcı listesi</h3>
               <span style="font-size:12px;color:var(--muted)">Son 50 kullanıcı</span>
             </div>
             <table>
-              <thead><tr><th>E-posta</th><th>Ad</th><th>Plan</th><th>Kayıt</th><th>Son Aktif</th></tr></thead>
+              <thead><tr><th>Kullanıcı</th><th>Ad</th><th>Plan</th><th>Analiz</th><th>Son Aktif</th></tr></thead>
               <tbody id="users-table-body"><tr><td colspan="5" class="empty">Yükleniyor…</td></tr></tbody>
             </table>
           </div>
@@ -334,7 +357,7 @@ tbody td:first-child{color:var(--text);font-weight:600}
           <div class="table-card">
             <div class="table-header"><h3>⭐ Tüm Premium Kullanıcılar</h3></div>
             <table>
-              <thead><tr><th>E-posta</th><th>Ad</th><th>Plan</th><th>Fiyat</th><th>Yenileme</th><th>Aktivasyon</th></tr></thead>
+              <thead><tr><th>Kullanıcı</th><th>Ad</th><th>Plan</th><th>Fiyat</th><th>Yenileme</th><th>Aktivasyon</th></tr></thead>
               <tbody id="premium-full-table"><tr><td colspan="6" class="empty">Yükleniyor…</td></tr></tbody>
             </table>
           </div>
@@ -554,6 +577,14 @@ function mkDonut(id, labels, data, colors) {
 
 const fmt = v => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(1)+'K' : String(v);
 const fmtMoney = v => '₺'+ (v||0).toLocaleString('tr-TR', {minimumFractionDigits:0});
+const fmtDate = value => value ? new Date(value).toLocaleDateString('tr-TR') : '—';
+const fmtDateTime = value => value ? new Date(value).toLocaleString('tr-TR') : '—';
+const latestValue = points => {
+  const normalized = (points || []).filter(p => typeof p.value === 'number');
+  return normalized.length ? normalized[normalized.length - 1].value : null;
+};
+const userLabel = u => u?.appUserId || u?.email || u?.uid || u?.userUid || '—';
+const secondaryUserLabel = u => u?.uid || u?.email || '';
 
 // ── OVERVIEW ──────────────────────────────────────────────────────────────────
 async function loadOverview() {
@@ -562,6 +593,8 @@ async function loadOverview() {
     overviewData = data;
     const fs = data.firestore || {};
     const ads = data.adSpending || {};
+    const rc = data.revenuecat?.summary || {};
+    const activity = data.activity || { instagram: [], whatsapp: [], totals: {} };
 
     document.getElementById('k-total-users').textContent = fmt(fs.totalUsers||0);
     document.getElementById('k-active-week').textContent = `${fmt(fs.activeWeek||0)} bu hafta aktif`;
@@ -571,13 +604,17 @@ async function loadOverview() {
     document.getElementById('k-active-week-big').textContent = fmt(fs.activeWeek||0);
     document.getElementById('k-active-month-big').textContent = fmt(fs.activeMonth||0);
 
-    // Revenue from RC (placeholder)
-    document.getElementById('k-revenue').textContent = '—';
+    document.getElementById('k-revenue').textContent =
+      rc.revenue28d != null ? fmtMoney(rc.revenue28d) : '—';
+    document.getElementById('k-subscriptions').textContent =
+      rc.activeSubscriptions != null
+        ? `${fmt(rc.activeSubscriptions)} aktif abonelik`
+        : 'RevenueCat bağlı değil';
 
-    // ROAS
     const adTotal = ads.total||0;
-    document.getElementById('k-ad-total').textContent = fmtMoney(adTotal)+' harcandı';
-    document.getElementById('k-roas').textContent = adTotal > 0 ? '—' : '—';
+    document.getElementById('k-ad-total').textContent =
+      `${fmt(activity.totals?.instagramHistoryCount || 0)} IG · ${fmt(activity.totals?.whatsappHistoryCount || 0)} WA geçmişi`;
+    document.getElementById('k-roas').textContent = fmt(fs.totalAnalyses || 0);
 
     // New users chart
     const usersByDay = fs.newUsersByDay || {};
@@ -607,26 +644,103 @@ async function loadOverview() {
       [ads.meta||0, ads.google||0, ads.tiktok||0],
       ['#60a5fa','#f87171','rgba(255,255,255,.6)']
     );
+
+    document.getElementById('ig-activity-total').textContent =
+      `${fmt(activity.totals?.instagramHistoryCount || 0)} toplam arama`;
+    document.getElementById('wa-activity-total').textContent =
+      `${fmt(activity.totals?.whatsappHistoryCount || 0)} toplam arama`;
+
+    const igBody = document.getElementById('ig-activity-body');
+    const igRows = activity.instagram || [];
+    igBody.innerHTML = igRows.length
+      ? igRows.map(item => `
+        <tr>
+          <td>
+            <div>${userLabel(item)}</div>
+            <div style="font-size:11px;color:var(--muted)">${secondaryUserLabel(item)}</div>
+          </td>
+          <td>
+            <div>@${item.username || '—'}</div>
+            <div style="font-size:11px;color:var(--muted)">${item.fullName || '—'}</div>
+          </td>
+          <td>${item.mediaCount ?? 0}</td>
+          <td>${fmtDateTime(item.timestamp)}</td>
+        </tr>`)
+      .join('')
+      : '<tr><td colspan="4" class="empty">Henüz Instagram geçmişi yok</td></tr>';
+
+    const waBody = document.getElementById('wa-activity-body');
+    const waRows = activity.whatsapp || [];
+    waBody.innerHTML = waRows.length
+      ? waRows.map(item => `
+        <tr>
+          <td>
+            <div>${userLabel(item)}</div>
+            <div style="font-size:11px;color:var(--muted)">${secondaryUserLabel(item)}</div>
+          </td>
+          <td>${item.name || '—'}</td>
+          <td>${item.number || '—'}</td>
+          <td>${fmtDateTime(item.timestamp)}</td>
+        </tr>`)
+      .join('')
+      : '<tr><td colspan="4" class="empty">Henüz WhatsApp geçmişi yok</td></tr>';
   } catch(e) { console.error(e); }
 }
 
 // ── REVENUE ───────────────────────────────────────────────────────────────────
 async function loadRevenue() {
-  // RevenueCat chart (placeholder — requires secret API key)
-  document.getElementById('r-mrr').textContent = '—';
-  document.getElementById('r-subs').textContent = '—';
-  document.getElementById('r-churn').textContent = '—';
+  try {
+    if (!overviewData) {
+      overviewData = await apiFetch('/metrics/overview');
+    }
 
-  const days30 = [];
-  for (let i=29;i>=0;i--) {
-    const d = new Date(); d.setDate(d.getDate()-i);
-    days30.push(d.toISOString().split('T')[0]);
+    const rc = overviewData?.revenuecat?.summary || {};
+    const data = await apiFetch('/metrics/revenue');
+    const revenuePoints = data.revenue?.values || [];
+    const mrrPoints = data.mrr?.values || [];
+    const churnPoints = data.churn?.values || [];
+
+    document.getElementById('r-mrr').textContent =
+      rc.mrr != null ? fmtMoney(rc.mrr) : '—';
+    document.getElementById('r-subs').textContent =
+      rc.activeSubscriptions != null ? fmt(rc.activeSubscriptions) : '—';
+    const churnLatest = latestValue(churnPoints);
+    document.getElementById('r-churn').textContent =
+      churnLatest != null ? `${Number(churnLatest).toFixed(2)}%` : '—';
+
+    const labels = (revenuePoints.length ? revenuePoints : mrrPoints)
+      .map(p => (p.timestamp || '').slice(5, 10));
+
+    mkLine('chart-revenue', labels,
+      [
+        {
+          data: revenuePoints.map(p => p.value || 0),
+          borderColor:'#f5c842',
+          backgroundColor:'rgba(245,200,66,.08)',
+          fill:true,
+          tension:.4,
+          pointRadius:2,
+          borderWidth:2,
+          label:'Gelir'
+        },
+        {
+          data: mrrPoints.map(p => p.value || 0),
+          borderColor:'#f336b6',
+          backgroundColor:'transparent',
+          fill:false,
+          tension:.35,
+          pointRadius:2,
+          borderWidth:2,
+          label:'MRR'
+        }
+      ],
+      {plugins:{legend:{display:true,labels:{color:'#9ca3af',font:{size:12}}}}}
+    );
+  } catch (e) {
+    document.getElementById('r-mrr').textContent = '—';
+    document.getElementById('r-subs').textContent = '—';
+    document.getElementById('r-churn').textContent = '—';
   }
-  mkLine('chart-revenue', days30.map(d=>d.slice(5)),
-    [{data:days30.map(()=>0), borderColor:'#f5c842', backgroundColor:'rgba(245,200,66,.08)',
-      fill:true, tension:.4, pointRadius:2, borderWidth:2, label:'Gelir (₺)'}],
-    {plugins:{legend:{display:true,labels:{color:'#9ca3af',font:{size:12}}}}}
-  );
 
   // Load premium users for table
   await loadPremiumTable('premium-table-body', 5);
@@ -640,12 +754,15 @@ async function loadPremiumTable(tbodyId, limit) {
     if (!users.length) { tbody.innerHTML='<tr><td colspan="6" class="empty">Henüz premium kullanıcı yok</td></tr>'; return; }
     tbody.innerHTML = users.map(u => `
       <tr>
-        <td>${u.email||'—'}</td>
+        <td>
+          <div>${userLabel(u)}</div>
+          <div style="font-size:11px;color:var(--muted)">${secondaryUserLabel(u)}</div>
+        </td>
         <td>${u.displayName||'—'}</td>
         <td><span class="tag ${u.premiumPlanTitle?.includes('Haftalık')?'weekly':'monthly'}">${u.premiumPlanTitle||'—'}</span></td>
         <td>${u.premiumPriceLabel||'—'}</td>
         <td>${u.premiumRenewalType||'—'}</td>
-        <td>${u.premiumActivatedAt ? new Date(u.premiumActivatedAt).toLocaleDateString('tr-TR') : '—'}</td>
+        <td>${fmtDate(u.premiumActivatedAt)}</td>
       </tr>`).join('');
   } catch(e) { tbody.innerHTML='<tr><td colspan="6" class="empty">Veri alınamadı</td></tr>'; }
 }
@@ -656,7 +773,7 @@ async function loadUsers() {
   try {
     const data = await apiFetch('/users?limit=50');
     const users = data.users||[];
-    document.getElementById('u-total').textContent = fmt(users.length);
+    document.getElementById('u-total').textContent = fmt(overviewData?.firestore?.totalUsers || users.length);
     if (overviewData?.firestore) {
       document.getElementById('u-week').textContent = fmt(overviewData.firestore.activeWeek||0);
       document.getElementById('u-month').textContent = fmt(overviewData.firestore.activeMonth||0);
@@ -664,11 +781,14 @@ async function loadUsers() {
     if (!users.length) { tbody.innerHTML='<tr><td colspan="5" class="empty">Kullanıcı yok</td></tr>'; return; }
     tbody.innerHTML = users.map(u => `
       <tr>
-        <td>${u.email||'—'}</td>
+        <td>
+          <div>${userLabel(u)}</div>
+          <div style="font-size:11px;color:var(--muted)">${u.uid||'—'}</div>
+        </td>
         <td>${u.displayName||'—'}</td>
         <td><span class="tag ${u.isPremium?'premium':'free'}">${u.isPremium?'Premium':'Ücretsiz'}</span></td>
-        <td>${u.createdAt ? new Date(u.createdAt).toLocaleDateString('tr-TR') : '—'}</td>
-        <td>${u.lastActiveAt ? new Date(u.lastActiveAt).toLocaleDateString('tr-TR') : '—'}</td>
+        <td>${fmt(u.totalAnalyses || 0)}</td>
+        <td>${fmtDate(u.lastActiveAt)}</td>
       </tr>`).join('');
   } catch(e) { tbody.innerHTML='<tr><td colspan="5" class="empty">Veri alınamadı</td></tr>'; }
 }
